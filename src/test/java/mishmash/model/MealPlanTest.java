@@ -52,6 +52,10 @@ class MealPlanTest {
     @Test
     void mealPlan_nullDays_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new MealPlan(null));
+        assertThrows(NullPointerException.class, () -> new MealPlan(List.of(), null));
+        assertThrows(NullPointerException.class, () -> new MealPlan(null, NutritionTargets.none()));
+        assertThrows(NullPointerException.class,
+                () -> new MealPlan(Arrays.asList((DayPlan) null), NutritionTargets.none()));
     }
 
     @Test

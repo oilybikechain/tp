@@ -158,7 +158,7 @@ public class MealPlanGenerator {
         for (int i = 0; i < days; i++) {
             dayPlans.add(matching.get(random.nextInt(matching.size())));
         }
-        return new MealPlan(dayPlans);
+        return new MealPlan(dayPlans, targets);
     }
 
     /**

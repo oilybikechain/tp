@@ -12,6 +12,7 @@ import mishmash.ui.MealPlanViewer.MealSummary;
  */
 public class MealPlan {
     private final List<DayPlan> days;
+    private final NutritionTargets targets;
 
     /**
      * Creates a meal plan from the given days.
@@ -20,8 +21,29 @@ public class MealPlan {
      * @throws NullPointerException If the list or any day is null.
      */
     public MealPlan(List<DayPlan> days) {
+        this(days, NutritionTargets.none());
+    }
+
+    /**
+     * Creates a meal plan retaining the daily targets used during generation.
+     *
+     * @param days The day plans, in order; copied to prevent later changes.
+     * @param targets The immutable daily targets, including any omitted nutrients.
+     * @throws NullPointerException If the list, any day, or the targets are null.
+     */
+    public MealPlan(List<DayPlan> days, NutritionTargets targets) {
         Objects.requireNonNull(days, "days");
         this.days = List.copyOf(days);
+        this.targets = Objects.requireNonNull(targets, "targets");
+    }
+
+    /**
+     * Returns the daily targets supplied when this plan was generated.
+     *
+     * @return The plan's targets, with no targets set for an untargeted plan.
+     */
+    public NutritionTargets getTargets() {
+        return targets;
     }
 
     /**

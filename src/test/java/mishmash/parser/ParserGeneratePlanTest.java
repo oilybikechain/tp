@@ -1,6 +1,7 @@
 package mishmash.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -104,5 +105,37 @@ class ParserGeneratePlanTest {
         assertThrows(NullPointerException.class, () -> new Parser(null, activePlan, () -> Optional.empty()));
         assertThrows(NullPointerException.class, () -> new Parser(generator, null, () -> Optional.empty()));
         assertThrows(NullPointerException.class, () -> new Parser(generator, activePlan, null));
+    }
+
+    @Test
+    void viewPlan_targetsWithinGenerationTolerance_warnsAboveExactTarget() throws MishMashException {
+        RecipeBook recipes = threeRecipes();
+        Command view = parser.parseCommand("view-plan");
+        Command viewDay = parser.parseCommand("view-plan d/1");
+        parser.parseCommand("generate-plan d/1 cal/1700 p/85 c/180 f/45").execute(recipes);
+
+        String display = view.execute(recipes);
+        assertTrue(display.contains("Warning: Calories exceed target by 100 kcal"
+                + " (1800 kcal actual; 1700 kcal target)."), display);
+        assertTrue(display.contains("Warning: Protein exceeds target by 5 g (90 g actual; 85 g target)."), display);
+        assertFalse(display.contains("Warning: Carbs"), display);
+        assertFalse(display.contains("Warning: Fats"), display);
+        assertEquals(display, viewDay.execute(recipes));
+        assertEquals(1700, activePlan.get().orElseThrow().getTargets().getCalories());
+
+        // Failed generation preserves both the meals and the targets used by previously parsed commands.
+        assertThrows(MishMashException.class,
+                () -> parser.parseCommand("generate-plan d/1 cal/1").execute(recipes));
+        assertEquals(display, view.execute(recipes));
+
+        parser.parseCommand("generate-plan d/1 cal/1800").execute(recipes);
+        assertFalse(view.execute(recipes).contains("Warning:"));
+        assertEquals(1800, activePlan.get().orElseThrow().getTargets().getCalories());
+
+        parser.parseCommand("generate-plan d/1 cal/1700").execute(recipes);
+        assertTrue(view.execute(recipes).contains("Warning:"));
+        parser.parseCommand("generate-plan d/1").execute(recipes);
+        assertFalse(view.execute(recipes).contains("Warning:"));
+        assertFalse(activePlan.get().orElseThrow().getTargets().hasAnyTarget());
     }
 }
